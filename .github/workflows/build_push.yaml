@@ -12,9 +12,6 @@ on:
       ENVIRONMENT:
         required: true
         type: string
-      AWS_REGION:
-        required: true
-        type: string
 
 jobs:
   build-and-push:
