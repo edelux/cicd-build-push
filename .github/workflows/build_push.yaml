@@ -32,7 +32,7 @@ jobs:
           ( \
             apt update -qq >/dev/null 2>&1 && \
             DEBIAN_FRONTEND=noninteractive apt upgrade -y >/dev/null 2>&1 && \
-            DEBIAN_FRONTEND=noninteractive apt install -y j2cli gettext >/dev/null 2>&1 && \
+            DEBIAN_FRONTEND=noninteractive apt install -y j2cli gettext >/dev/null 2>&1 \
           )
 
           export APP=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.APP // \"\"" config.yaml)
