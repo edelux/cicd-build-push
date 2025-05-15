@@ -26,7 +26,22 @@ jobs:
       - name: Setup Environment variable
         run: |
           echo "ENVIRONMENT=${{ inputs.ENVIRONMENT }}" >> $GITHUB_ENV
-          echo "👷ENVIRONMENT: ${{ inputs.ENVIRONMENT }}"
+          REGISTRY=$(yq -r ".environments.${{ env.ENVIRONMENT }}.docker.url" config.yaml)
+          CONTEXT=$(yq -r ".environments.${{ env.ENVIRONMENT }}.docker.filepath // \".\"" config.yaml)
+          DOCKERFILE=$(yq -r ".environments.${{ env.ENVIRONMENT }}.docker.file // \"Dockerfile\"" config.yaml)
+          APP=$(yq -r ".environments.${{ env.ENVIRONMENT }}.docker.arguments.APP // empty" config.yaml)
+          PLATFORMS=$(yq -r ".environments.${{ env.ENVIRONMENT }}.docker.platforms // \"linux/amd64\"" config.yaml)
+          VERSION=$(yq -r ".environments.${{ env.ENVIRONMENT }}.docker.arguments.VERSION // empty" config.yaml)
+          
+          if [ -z "$APP" ] || [ -z "$VERSION" ]; then
+            echo "❌ ERROR: APP and/or VERSION are not defined in config.yaml for environment ${{ env.ENVIRONMENT }}"
+            exit 1
+          fi
+
+          echo "context=$CONTEXT" >> $GITHUB_OUTPUT
+          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+          echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
+          echo "image=$REGISTRY/$APP:$VERSION" >> $GITHUB_OUTPUT
   
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -46,4 +61,13 @@ jobs:
   
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.config.outputs.image }}
+          context: ${{ steps.config.outputs.context }}
+          platforms: ${{ steps.config.outputs.platforms }}
+          file: ${{ steps.config.outputs.context }}/${{ steps.config.outputs.dockerfile }}
 ...
