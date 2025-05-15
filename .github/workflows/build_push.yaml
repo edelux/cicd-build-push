@@ -29,11 +29,9 @@ jobs:
       - name: Setup CI/CD Build and Push
         id: config
         run: |
-          ( \
-            apt update -qq >/dev/null 2>&1 && \
-            DEBIAN_FRONTEND=noninteractive apt upgrade -y >/dev/null 2>&1 && \
-            DEBIAN_FRONTEND=noninteractive apt install -y j2cli gettext >/dev/null 2>&1 \
-          )
+          apt update -qq >/dev/null 2>&1 && \
+          DEBIAN_FRONTEND=noninteractive apt upgrade -y >/dev/null 2>&1 && \
+          DEBIAN_FRONTEND=noninteractive apt install -y j2cli gettext >/dev/null 2>&1
 
           export APP=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.APP // \"\"" config.yaml)
           export VERSION=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.VERSION // \"\"" config.yaml)
