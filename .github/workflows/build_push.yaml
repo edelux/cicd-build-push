@@ -29,12 +29,22 @@ jobs:
       - name: Setup CI/CD Build and Push
         id: config
         run: |
+          ( \
+            apt update -qq >/dev/null 2>&1 && \
+            DEBIAN_FRONTEND=noninteractive apt upgrade -y >/dev/null 2>&1 && \
+            DEBIAN_FRONTEND=noninteractive apt install -y j2cli gettext >/dev/null 2>&1 && \
+          )
+
+          export APP=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.APP // \"\"" config.yaml)
+          export VERSION=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.VERSION // \"\"" config.yaml)
+
+          j2 config.yaml -o config.yaml
+
           REGISTRY=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.url" config.yaml)
-          APP=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments.APP // \"\"" config.yaml)
           CONTEXT=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.filepath // \".\"" config.yaml)
           DOCKERFILE=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.file // \"Dockerfile\"" config.yaml)
-          VERSION=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments.VERSION // \"\"" config.yaml)
           PLATFORMS=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.platforms // \"linux/amd64\"" config.yaml)
+          BUILD_ARGS=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments|to_entries|.[]| \"\(.key)=\(.value)\"" config.yaml)
 
           if [ -z "$APP" ] || [ -z "$VERSION" ]; then
             echo "❌ ERROR: APP and/or VERSION are not defined in config.yaml for environment ${{ env.ENVIRONMENT }}"
@@ -46,6 +56,9 @@ jobs:
           echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
           echo "image=$REGISTRY/$APP:$VERSION" >> $GITHUB_OUTPUT
           echo "ENVIRONMENT=${{ inputs.ENVIRONMENT }}" >> $GITHUB_ENV
+          echo "buildargs<<EOF" >> $GITHUB_OUTPUT
+          echo "$BUILD_ARGS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
   
       - name: Setup AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -71,4 +84,5 @@ jobs:
           context: ${{ steps.config.outputs.context }}
           platforms: ${{ steps.config.outputs.platforms }}
           file: ${{ steps.config.outputs.context }}/${{ steps.config.outputs.dockerfile }}
+          build-args: ${{ steps.config.outputs.buildargs }}
 ...
