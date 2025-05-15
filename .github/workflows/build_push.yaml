@@ -25,16 +25,16 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-  
+
       - name: Setup CI/CD Build and Push
         run: |
           REGISTRY=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.url" config.yaml)
+          APP=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments.APP // \"\"" config.yaml)
           CONTEXT=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.filepath // \".\"" config.yaml)
           DOCKERFILE=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.file // \"Dockerfile\"" config.yaml)
-          APP=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments.APP // empty" config.yaml)
+          VERSION=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments.VERSION // \"\"" config.yaml)
           PLATFORMS=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.platforms // \"linux/amd64\"" config.yaml)
-          VERSION=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments.VERSION // empty" config.yaml)
-          
+
           if [ -z "$APP" ] || [ -z "$VERSION" ]; then
             echo "❌ ERROR: APP and/or VERSION are not defined in config.yaml for environment ${{ env.ENVIRONMENT }}"
             exit 1
@@ -44,6 +44,7 @@ jobs:
           echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
           echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
           echo "image=$REGISTRY/$APP:$VERSION" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENT=${{ inputs.ENVIRONMENT }}" >> $GITHUB_ENV
   
       - name: Setup AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
