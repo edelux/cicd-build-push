@@ -14,7 +14,7 @@ on:
         type: string
 
 jobs:
-  build-and-push:
+  action-build-and-push:
     runs-on: ubuntu-latest
     environment: ${{ inputs.ENVIRONMENT }}
 
