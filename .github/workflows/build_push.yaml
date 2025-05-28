@@ -30,13 +30,12 @@ jobs:
         id: config
         run: |
           sudo apt update -qq >/dev/null 2>&1 && \
-          DEBIAN_FRONTEND=noninteractive sudo apt upgrade -y >/dev/null 2>&1 && \
-          DEBIAN_FRONTEND=noninteractive sudo apt install -y j2cli gettext >/dev/null 2>&1
+          DEBIAN_FRONTEND=noninteractive sudo apt install -y j2cli gettext moreutils >/dev/null 2>&1
 
           export APP=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.APP // \"\"" config.yaml)
           export VERSION=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.VERSION // \"\"" config.yaml)
 
-          j2 config.yaml -o config.yaml
+          chronic j2 config.yaml -o config.yaml
 
           REGISTRY=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.url" config.yaml)
           CONTEXT=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.filepath // \".\"" config.yaml)
