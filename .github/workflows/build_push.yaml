@@ -34,7 +34,7 @@ jobs:
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
 
           ENVIRONMENT="${{ inputs.ENVIRONMENT }}"
-          if test -z "$ENVIRONMENT"; then
+          if [ -z "$ENVIRONMENT" ]; then
             ENVIRONMENT="null"
           fi
 
