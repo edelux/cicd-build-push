@@ -48,33 +48,6 @@ jobs:
           #TAGS_ARRAY=$(printf "$RAW_TAGS"|yq -r '(if type=="string" then [.] elif type=="array" then . else ["latest"] end) | map("'"$REGISTRY"'/'"$NAME"':" + .) | join(",")')
           TAGS_ARRAY='docker.io/edelux:0.0.1'
 
-          BUILD_ARGS=""
-          BUILD_ARGS_RAW=$(yq -r ".environments.$ENVIRONMENT.docker.arguments//.docker.arguments//{}" config.yaml)
-
-          if [ "$BUILD_ARGS_RAW" != "{}" ] && [ "$BUILD_ARGS_RAW" != "null" ]; then
-            BUILD_ARGS_TYPE=$(printf "$BUILD_ARGS_RAW"|yq -r 'type')
-            
-            if [ "$BUILD_ARGS_TYPE" = "object" ]; then
-              BUILD_ARGS=$(printf "$BUILD_ARGS_RAW"|yq -r 'to_entries|map("\(.key)=\(.value)")|join("\n")')
-            elif [ "$BUILD_ARGS_TYPE" = "array" ]; then
-              BUILD_ARGS=$(printf "$BUILD_ARGS_RAW"|yq -r '.[]')
-            fi
-          fi
-          
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          GIT_SHA="${{ github.sha }}"
-          GIT_REF="${{ github.ref_name }}"
-          
-          if ! echo "$BUILD_ARGS" | grep -q "BUILDTIME="; then
-            BUILD_ARGS="${BUILD_ARGS}${BUILD_ARGS:+$'\n'}BUILDTIME=${TIMESTAMP}"
-          fi
-          if ! echo "$BUILD_ARGS" | grep -q "VERSION="; then
-            BUILD_ARGS="${BUILD_ARGS}${BUILD_ARGS:+$'\n'}VERSION=${GIT_REF}"
-          fi
-          if ! echo "$BUILD_ARGS" | grep -q "REVISION="; then
-            BUILD_ARGS="${BUILD_ARGS}${BUILD_ARGS:+$'\n'}REVISION=${GIT_SHA}"
-          fi
-
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT" >> $GITHUB_OUTPUT
           echo "tags=$TAGS_ARRAY" >> $GITHUB_OUTPUT
@@ -83,10 +56,6 @@ jobs:
           echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
 
-          echo "buildargs<<EOF" >> $GITHUB_OUTPUT
-          echo "$BUILD_ARGS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
           echo "🐳 Docker Configuration:"
           echo "  Name: $NAME"
           echo "  Registry: $REGISTRY"
@@ -94,12 +63,6 @@ jobs:
           echo "  Dockerfile: $DOCKERFILE"
           echo "  Context: $CONTEXT"
           echo "  Platforms: $PLATFORMS"
-          echo "  Build Arguments:"
-          if [ -n "$BUILD_ARGS" ]; then
-            echo "$BUILD_ARGS" | sed 's/^/    /'
-          else
-            echo "    (none)"
-          fi
 
 #-------------------------------------------------------------------------------------------
         ## DockerHub
