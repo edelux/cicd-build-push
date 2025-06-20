@@ -34,7 +34,9 @@ jobs:
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
 
           ENVIRONMENT="${{ inputs.ENVIRONMENT }}"
-          if test -z "$ENVIRONMENT"; then; ENVIRONMENT="null"; fi
+          if test -z "$ENVIRONMENT"; then
+            ENVIRONMENT="null"
+          fi
 
           NAME=$(yq -r ".environments.$ENVIRONMENT.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
           CONTEXT=$(yq -r ".environments.$ENVIRONMENT.docker.filepath//.docker.filepath//\".\"" config.yaml)
