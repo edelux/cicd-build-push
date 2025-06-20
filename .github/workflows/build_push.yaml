@@ -30,9 +30,7 @@ jobs:
 
           chronic j2 config.yaml -o config.yaml
 
-          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
-
-          NAME=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
+          NAME=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.name // .docker.name // \"edelux\"" config.yaml)
           CONTEXT=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.filepath//.docker.filepath//\".\"" config.yaml)
           DOCKERFILE=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.file//.docker.filename//\"Dockerfile\"" config.yaml)
           REGISTRY=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.registry//.docker.registry//\"docker.io\"" config.yaml)
