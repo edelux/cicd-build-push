@@ -44,8 +44,9 @@ jobs:
           REGISTRY=$(yq -r ".environments.$ENVIRONMENT.docker.registry//.docker.registry//\"docker.io\"" config.yaml)
           PLATFORMS=$(yq -r ".environments.$ENVIRONMENT.docker.platforms//.docker.platforms//\"linux/amd64\"" config.yaml)
 
-          RAW_TAGS=$(yq -r ".environments.$ENVIRONMENT.docker.tags//.docker.tags//[\"latest\"]" config.yaml)
-          TAGS_ARRAY=$(printf "$RAW_TAGS"|yq -r '(if type=="string" then [.] elif type=="array" then . else ["latest"] end) | map("'"$REGISTRY"'/'"$NAME"':" + .) | join(",")')
+          #RAW_TAGS=$(yq -r ".environments.$ENVIRONMENT.docker.tags//.docker.tags//[\"latest\"]" config.yaml)
+          #TAGS_ARRAY=$(printf "$RAW_TAGS"|yq -r '(if type=="string" then [.] elif type=="array" then . else ["latest"] end) | map("'"$REGISTRY"'/'"$NAME"':" + .) | join(",")')
+          TAGS_ARRAY=docker.io/edelux:0.0.1
 
           BUILD_ARGS=""
           BUILD_ARGS_RAW=$(yq -r ".environments.$ENVIRONMENT.docker.arguments//.docker.arguments//{}" config.yaml)
