@@ -38,11 +38,16 @@ jobs:
             ENVIRONMENT="null"
           fi
 
-          NAME=$(yq -r ".environments.$ENVIRONMENT.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
-          CONTEXT=$(yq -r ".environments.$ENVIRONMENT.docker.filepath//.docker.filepath//\".\"" config.yaml)
-          DOCKERFILE=$(yq -r ".environments.$ENVIRONMENT.docker.file//.docker.filename//\"Dockerfile\"" config.yaml)
-          REGISTRY=$(yq -r ".environments.$ENVIRONMENT.docker.registry//.docker.registry//\"docker.io\"" config.yaml)
-          PLATFORMS=$(yq -r ".environments.$ENVIRONMENT.docker.platforms//.docker.platforms//\"linux/amd64\"" config.yaml)
+          NAME='edelux'
+          #NAME=$(yq -r ".environments.$ENVIRONMENT.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
+          CONTEXT='.'
+          #CONTEXT=$(yq -r ".environments.$ENVIRONMENT.docker.filepath//.docker.filepath//\".\"" config.yaml)
+          DOCKERFILE='Dockerfile.alpine'
+          #DOCKERFILE=$(yq -r ".environments.$ENVIRONMENT.docker.file//.docker.filename//\"Dockerfile\"" config.yaml)
+          REGISTRY='docker.io'
+          #REGISTRY=$(yq -r ".environments.$ENVIRONMENT.docker.registry//.docker.registry//\"docker.io\"" config.yaml)
+          PLATFORMS='linux/amd64,linux/arm64,linux/s390x,linux/ppc64le'
+          #PLATFORMS=$(yq -r ".environments.$ENVIRONMENT.docker.platforms//.docker.platforms//\"linux/amd64\"" config.yaml)
 
           #RAW_TAGS=$(yq -r ".environments.$ENVIRONMENT.docker.tags//.docker.tags//[\"latest\"]" config.yaml)
           #TAGS_ARRAY=$(printf "$RAW_TAGS"|yq -r '(if type=="string" then [.] elif type=="array" then . else ["latest"] end) | map("'"$REGISTRY"'/'"$NAME"':" + .) | join(",")')
