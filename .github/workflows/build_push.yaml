@@ -13,7 +13,6 @@ on:
 jobs:
   action-build-and-push:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.ENVIRONMENT }}
 
     permissions:
       id-token: write
@@ -33,13 +32,13 @@ jobs:
 
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
 
-          NAME=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
-          CONTEXT=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.filepath//.docker.filepath//\".\"" config.yaml)
-          DOCKERFILE=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.file//.docker.filename//\"Dockerfile\"" config.yaml)
-          REGISTRY=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.registry//.docker.registry//\"docker.io\"" config.yaml)
-          PLATFORMS=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.platforms//.docker.platforms//\"linux/amd64\"" config.yaml)
-          BUILD_ARGS=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments//.docker.arguments//{}|to_entries|.[]| \"\(.key)=\(.value)\"" config.yaml)
-          TAGS=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.tags//.docker.tags//[]|if type==\"string\"then[.]elif type==\"array\"then . else[]end|.[]" config.yaml)
+          NAME=$(yq -r ".docker.name//\"$REPO_NAME\"" config.yaml)
+          CONTEXT=$(yq -r ".docker.filepath//\".\"" config.yaml)
+          DOCKERFILE=$(yq -r ".docker.filename//\"Dockerfile\"" config.yaml)
+          REGISTRY=$(yq -r ".docker.registry//\"docker.io\"" config.yaml)
+          PLATFORMS=$(yq -r ".docker.platforms//\"linux/amd64\"" config.yaml)
+          BUILD_ARGS=$(yq -r ".docker.arguments//{}|to_entries|.[]| \"\(.key)=\(.value)\"" config.yaml)
+          TAGS=$(yq -r ".docker.tags//[]|if type==\"string\"then[.]elif type==\"array\"then . else[]end|.[]" config.yaml)
 
           echo "context=$CONTEXT" >> $GITHUB_OUTPUT
           echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
