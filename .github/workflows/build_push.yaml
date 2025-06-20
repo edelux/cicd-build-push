@@ -32,16 +32,45 @@ jobs:
 
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
 
-          NAME=$(yq -r ".docker.name//\"$REPO_NAME\"" config.yaml)
-          CONTEXT=$(yq -r ".docker.filepath//\".\"" config.yaml)
-          DOCKERFILE=$(yq -r ".docker.filename//\"Dockerfile\"" config.yaml)
-          REGISTRY=$(yq -r ".docker.registry//\"docker.io\"" config.yaml)
-          PLATFORMS=$(yq -r ".docker.platforms//\"linux/amd64\"" config.yaml)
-          BUILD_ARGS=$(yq -r ".docker.arguments//{}|to_entries|map(\"\(.key)=\(.value)\")|.[]" config.yaml)
+          NAME=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
+          CONTEXT=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.filepath//.docker.filepath//\".\"" config.yaml)
+          DOCKERFILE=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.file//.docker.filename//\"Dockerfile\"" config.yaml)
+          REGISTRY=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.registry//.docker.registry//\"docker.io\"" config.yaml)
+          PLATFORMS=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.platforms//.docker.platforms//\"linux/amd64\"" config.yaml)
 
-          IFS=$'\n' read -rd '' -a tag_array <<<"$(yq -r '.docker.tags//[]|(if type=="string"then[.]elif type=="array"then . else[]end)[]' config.yaml)"
+          RAW_TAGS=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.tags//.docker.tags//[\"latest\"]" config.yaml)
+          TAGS_ARRAY=$(printf "$RAW_TAGS"|yq -r '(if type=="string"then[.]elif type=="array"then. else["latest"]end)|map("'"$REGISTRY"'/'"$NAME"':"+.)|join(",")')
 
+          BUILD_ARGS=""
+          BUILD_ARGS_RAW=$(yq -r ".environments.${{ inputs.ENVIRONMENT }}.docker.arguments//.docker.arguments//{}" config.yaml)
+
+          if [ "$BUILD_ARGS_RAW" != "{}" ] && [ "$BUILD_ARGS_RAW" != "null" ]; then
+            BUILD_ARGS_TYPE=$(printf "$BUILD_ARGS_RAW"|yq -r 'type')
+            
+            if [ "$BUILD_ARGS_TYPE" = "object" ]; then
+              BUILD_ARGS=$(printf "$BUILD_ARGS_RAW"|yq -r 'to_entries|map("\(.key)=\(.value)")|join("\n")')
+            elif [ "$BUILD_ARGS_TYPE" = "array" ]; then
+              BUILD_ARGS=$(printf "$BUILD_ARGS_RAW"|yq -r '.[]')
+            fi
+          fi
+          
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GIT_SHA="${{ github.sha }}"
+          GIT_REF="${{ github.ref_name }}"
+          
+          if ! echo "$BUILD_ARGS" | grep -q "BUILDTIME="; then
+            BUILD_ARGS="${BUILD_ARGS}${BUILD_ARGS:+$'\n'}BUILDTIME=${TIMESTAMP}"
+          fi
+          if ! echo "$BUILD_ARGS" | grep -q "VERSION="; then
+            BUILD_ARGS="${BUILD_ARGS}${BUILD_ARGS:+$'\n'}VERSION=${GIT_REF}"
+          fi
+          if ! echo "$BUILD_ARGS" | grep -q "REVISION="; then
+            BUILD_ARGS="${BUILD_ARGS}${BUILD_ARGS:+$'\n'}REVISION=${GIT_SHA}"
+          fi
+
+          echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS_ARRAY" >> $GITHUB_OUTPUT
           echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
           echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
           echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
@@ -51,13 +80,22 @@ jobs:
           echo "$BUILD_ARGS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          echo "tags<<EOF" >> $GITHUB_OUTPUT
-            for tag in "${tag_array[@]}"; do
-              echo "$REGISTRY/$NAME:$tag" >> $GITHUB_OUTPUT
-            done
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "🐳 Docker Configuration:"
+          echo "  Name: $NAME"
+          echo "  Registry: $REGISTRY"
+          echo "  Tags: $TAGS_ARRAY"
+          echo "  Dockerfile: $DOCKERFILE"
+          echo "  Context: $CONTEXT"
+          echo "  Platforms: $PLATFORMS"
+          echo "  Build Arguments:"
+          if [ -n "$BUILD_ARGS" ]; then
+            echo "$BUILD_ARGS" | sed 's/^/    /'
+          else
+            echo "    (none)"
+          fi
 
-        ## GitHub
+#-------------------------------------------------------------------------------------------
+        ## DockerHub
       - name: Login to GitHub
         if: ${{ steps.config.outputs.registry == 'docker.io' }}
         uses: docker/login-action@v3
@@ -65,9 +103,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+#-------------------------------------------------------------------------------------------
+      ## GitHub Container Registry
+      - name: Login to GitHub Container Registry
+        if: ${{ steps.config.outputs.registry == 'ghcr.io' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+#-------------------------------------------------------------------------------------------
         ## AWS ECR
       - name: Setup AWS Credentials
-        if: ${{ steps.config.outputs.registry == 'ecr' }}
+        if: ${{ contains(steps.config.outputs.registry, 'amazonaws.com') || steps.config.outputs.registry == 'ecr' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           audience: sts.amazonaws.com
@@ -75,8 +124,9 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
 
       - name: Login to Amazon ECR
-        if: ${{ steps.config.outputs.registry == 'ecr' }}
+        if: ${{ contains(steps.config.outputs.registry, 'amazonaws.com') || steps.config.outputs.registry == 'ecr' }}
         uses: aws-actions/amazon-ecr-login@v2
+#-------------------------------------------------------------------------------------------
 
       - name: Set Multiarch Environment
         uses: docker/setup-qemu-action@v3
@@ -93,4 +143,26 @@ jobs:
           platforms: ${{ steps.config.outputs.platforms }}
           file: ${{ steps.config.outputs.context }}/${{ steps.config.outputs.dockerfile }}
           build-args: ${{ steps.config.outputs.buildargs }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.title=${{ steps.config.outputs.name }}
+            org.opencontainers.image.description=Docker image for ${{ steps.config.outputs.name }}
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.repository.updated_at }}
+
+      - name: Build Summary
+        run: |
+          echo "## 🐳 Docker Build Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ steps.config.outputs.name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** \`${{ steps.config.outputs.registry }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** \`${{ steps.config.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** \`${{ steps.config.outputs.platforms }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Dockerfile:** \`${{ steps.config.outputs.dockerfile }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Context:** \`${{ steps.config.outputs.context }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.ENVIRONMENT }}" != "" ]; then
+            echo "**Environment:** \`${{ inputs.ENVIRONMENT }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
 ...
