@@ -112,7 +112,6 @@ jobs:
           context: ${{ steps.config.outputs.context }}
           platforms: ${{ steps.config.outputs.platforms }}
           file: ${{ steps.config.outputs.context }}/${{ steps.config.outputs.dockerfile }}
-          build-args: ${{ steps.config.outputs.buildargs }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           labels: |
