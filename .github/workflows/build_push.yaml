@@ -9,6 +9,13 @@ on:
         required: false
         type: string
         default: ""
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: false
+      DOCKERHUB_TOKEN:
+        required: false
+      GITHUB_TOKEN:
+        required: false
 
 jobs:
   action-build-and-push:
@@ -71,9 +78,12 @@ jobs:
 
 #-------------------------------------------------------------------------------------------
         ## DockerHub
-      - name: Login to GitHub
+      - name: Login to DockerHub
         if: ${{ steps.config.outputs.registry == 'docker.io' }}
         uses: docker/login-action@v3
+        secrets:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -83,6 +93,8 @@ jobs:
       - name: Login to GitHub Container Registry
         if: ${{ steps.config.outputs.registry == 'ghcr.io' }}
         uses: docker/login-action@v3
+        secrets:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
