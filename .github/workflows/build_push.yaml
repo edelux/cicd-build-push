@@ -56,7 +56,7 @@ jobs:
 
           #RAW_TAGS=$(yq -r ".environments.$ENVIRONMENT.docker.tags//.docker.tags//[\"latest\"]" config.yaml)
           #TAGS_ARRAY=$(printf "$RAW_TAGS"|yq -r '(if type=="string" then [.] elif type=="array" then . else ["latest"] end) | map("'"$REGISTRY"'/'"$NAME"':" + .) | join(",")')
-          TAGS_ARRAY='docker.io/edelux:0.0.1'
+          TAGS_ARRAY='docker.io/edelux/dnsmasq:0.0.1'
 
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT" >> $GITHUB_OUTPUT
