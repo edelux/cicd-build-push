@@ -14,8 +14,6 @@ on:
         required: false
       DOCKERHUB_TOKEN:
         required: false
-      GITHUB_TOKEN:
-        required: false
 
 jobs:
   action-build-and-push:
