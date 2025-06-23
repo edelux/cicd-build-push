@@ -36,23 +36,22 @@ jobs:
 
           chronic j2 config.yaml -o config.yaml
 
-          NAME='edelux'
+          #NAME='edelux'
           #CONTEXT='.'
           #DOCKERFILE='Dockerfile.alpine'
           #REGISTRY='docker.io'
           #PLATFORMS='linux/amd64,linux/arm64,linux/s390x,linux/ppc64le'
-          TAGS_ARRAY='docker.io/edelux/dnsmasq:latest,docker.io/edelux/dnsmasq:0.0.4a'
+          #TAGS_ARRAY='docker.io/edelux/dnsmasq:latest,docker.io/edelux/dnsmasq:0.0.4a'
 
-          #REPO_NAME=$(basename "$GITHUB_REPOSITORY")
-          #test -z "${{ inputs.ENVIRONMENT }}" && ENVIRONMENT='null' || ENVIRONMENT="${{ inputs.ENVIRONMENT }}"
-          ENVIRONMENT="null"
-          #NAME=$(yq -r ".environments.$ENVIRONMENT.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
+          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          test -z "${{ inputs.ENVIRONMENT }}" && ENVIRONMENT='null' || ENVIRONMENT="${{ inputs.ENVIRONMENT }}"
+          NAME=$(yq -r ".environments.$ENVIRONMENT.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
           CONTEXT=$(yq -r ".environments.$ENVIRONMENT.docker.filepath//.docker.filepath//\".\"" config.yaml)
           DOCKERFILE=$(yq -r ".environments.$ENVIRONMENT.docker.file//.docker.filename//\"Dockerfile\"" config.yaml)
           REGISTRY=$(yq -r ".environments.$ENVIRONMENT.docker.registry//.docker.registry//\"docker.io\"" config.yaml)
           PLATFORMS=$(yq -r ".environments.$ENVIRONMENT.docker.platforms//.docker.platforms//\"linux/amd64\"" config.yaml)
-          #RAW_TAGS=$(yq -r ".environments.$ENVIRONMENT.docker.tags//.docker.tags//[\"latest\"]" config.yaml)
-          #TAGS_ARRAY=$(printf "$RAW_TAGS"|yq -r '(if type=="string" then [.] elif type=="array" then . else ["latest"] end) | map("'"$REGISTRY"'/'"$NAME"':" + .) | join(",")')
+          RAW_TAGS=$(yq -r ".environments.$ENVIRONMENT.docker.tags//.docker.tags//[\"latest\"]" config.yaml)
+          TAGS_ARRAY=$(printf "$RAW_TAGS"|yq -r '(if type=="string" then [.] elif type=="array" then . else ["latest"] end) | map("'"$REGISTRY"'/'"$NAME"':" + .) | join(",")')
 
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT" >> $GITHUB_OUTPUT
