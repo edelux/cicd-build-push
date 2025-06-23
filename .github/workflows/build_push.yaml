@@ -36,16 +36,17 @@ jobs:
 
           chronic j2 config.yaml -o config.yaml
 
-          #NAME='edelux'
+          NAME='edelux'
+          ENVIRONMENT='null'
           #CONTEXT='.'
           #DOCKERFILE='Dockerfile.alpine'
           #REGISTRY='docker.io'
           #PLATFORMS='linux/amd64,linux/arm64,linux/s390x,linux/ppc64le'
           #TAGS_ARRAY='docker.io/edelux/dnsmasq:latest,docker.io/edelux/dnsmasq:0.0.4a'
 
-          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
-          test -z "${{ inputs.ENVIRONMENT }}" && ENVIRONMENT='null' || ENVIRONMENT="${{ inputs.ENVIRONMENT }}"
-          NAME=$(yq -r ".environments.$ENVIRONMENT.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
+          #REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          #test -z "${{ inputs.ENVIRONMENT }}" && ENVIRONMENT='null' || ENVIRONMENT="${{ inputs.ENVIRONMENT }}"
+          #NAME=$(yq -r ".environments.$ENVIRONMENT.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
           CONTEXT=$(yq -r ".environments.$ENVIRONMENT.docker.filepath//.docker.filepath//\".\"" config.yaml)
           DOCKERFILE=$(yq -r ".environments.$ENVIRONMENT.docker.file//.docker.filename//\"Dockerfile\"" config.yaml)
           REGISTRY=$(yq -r ".environments.$ENVIRONMENT.docker.registry//.docker.registry//\"docker.io\"" config.yaml)
