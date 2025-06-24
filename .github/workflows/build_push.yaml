@@ -57,10 +57,12 @@ jobs:
           echo "🐳Docker Configuration:"
           echo "  Repo: $REPO_NAME"
           echo "  Environment: $ENVIRONMENT"
-          echo " Input env: ${{ inputs.ENVIRONMENT }}"
+          echo "  Input env: ${{ inputs.ENVIRONMENT }}"
           echo "  Name: $NAME"
           #echo "  Registry: $REGISTRY"
           #echo "  Tags: $TAGS_ARRAY"
           #echo "  Dockerfile: $DOCKERFILE"
           #echo "  Context: $CONTEXT"
           #echo "  Platforms: $PLATFORMS"
+          ls -la
+          cat config.yaml
