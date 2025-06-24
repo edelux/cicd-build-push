@@ -37,9 +37,9 @@ jobs:
           chronic j2 config.yaml -o config.yaml
 
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
-          test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='NuLl' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
-          NAME=$(yq -r '.environments.'$ENVIRONMENT'.docker.name//.docker.name//"'$REPO_NAME'"' config.yaml)
-          DOCKERFILE=$(yq -r '.environments.'$ENVIRONMENT'.docker.filename//.docker.filename//"Dockerfile"' config.yaml)
+          test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='vacio' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
+          NAME=$(yq -r '.environments.'$ENVIRONMENT'.docker.name // .docker.name // "'$REPO_NAME'" ' config.yaml)
+          DOCKERFILE=$(yq -r '.environments.'$ENVIRONMENT'.docker.filename// .docker.filename // "Dockerfile" ' config.yaml)
 
           echo "🐳Docker Configuration:"
           echo "  Repo: $REPO_NAME"
