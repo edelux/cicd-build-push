@@ -42,15 +42,21 @@ jobs:
 
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
           test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='null' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
-          NAME=$(yq -r '.environments.'$ENVIRONMENT'.docker.name // .docker.name // "'$REPO_NAME'" ' config.yaml)
-          DOCKERFILE=$(yq -r '.environments.'$ENVIRONMENT'.docker.filename // .docker.filename // "Dockerfile" ' config.yaml)
+          NAME=$(yq -r '.environments.'$ENVIRONMENT'.docker.name // .docker.name // "'$REPO_NAME'"' config.yaml)
+          CONTEXT=$(yq -r '.environments.'$ENVIRONMENT'.docker.filepath // .docker.filepath // "."' config.yaml)
+          REGISTRY=$(yq -r '.environments.'$ENVIRONMENT'.docker.registry // .docker.registry // "docker.io"' config.yaml)
+          DOCKERFILE=$(yq -r '.environments.'$ENVIRONMENT'.docker.filename // .docker.filename // "Dockerfile"' config.yaml)
+          PLATFORMS=$(yq -r '.environments.'$ENVIRONMENT'.docker.platforms // .docker.platforms // "linux/amd64"' config.yaml)
+
+          RAW_TAGS=$(yq -r '.environments.'$ENVIRONMENT'.docker.tags // .docker.tags // ["latest"]' config.yaml)
+          TAGS_ARRAY=$(printf $RAW_TAGS|yq -r '(if type=="string" then [.] elif type=="array" then . else ["latest"] end)|map("'"$REGISTRY"'/'"$NAME"':"+.)|join(",")')
 
           echo "🐳Docker Configuration:"
-          echo "  Repo: $REPO_NAME"
-          echo "  Environment: $ENVIRONMENT"
-          echo "  Input env: .${{ inputs.ENVIRONMENT }}."
-          echo "  Dockerfile: $DOCKERFILE"
           echo "  Name: $NAME"
-
-          ls -la
-          cat config.yaml
+          echo "  Repo name: $REPO_NAME"
+          echo "  Registry: $REGISTRY"
+          echo "  Tags: $TAGS_ARRAY"
+          echo "  Dockerfile: $DOCKERFILE"
+          echo "  Context: $CONTEXT"
+          echo "  raw tags: $RAW_TAGS"
+          echo "  Platforms: $PLATFORMS"
