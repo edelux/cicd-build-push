@@ -45,7 +45,7 @@ jobs:
           #TAGS_ARRAY='docker.io/edelux/dnsmasq:latest,docker.io/edelux/dnsmasq:0.0.4a'
 
           REPO_NAME=$(basename "$GITHUB_REPOSITORY")
-          test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='null' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
+          test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='nulo' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
           NAME=$(yq -r ".environments.$ENVIRONMENT.docker.name//.docker.name//\"$REPO_NAME\"" config.yaml)
           #CONTEXT=$(yq -r ".environments.$ENVIRONMENT.docker.filepath//.docker.filepath//\".\"" config.yaml)
           #DOCKERFILE=$(yq -r ".environments.$ENVIRONMENT.docker.file//.docker.filename//\"Dockerfile\"" config.yaml)
