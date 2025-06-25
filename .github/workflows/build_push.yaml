@@ -40,22 +40,25 @@ jobs:
 
           chronic j2 config.yaml -o config.yaml
 
-          REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+          USER_NAME=$(dirname $GITHUB_REPOSITORY)
+          REPO_NAME=$(basename $GITHUB_REPOSITORY)
           test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='null' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
           NAME=$(yq -r '.environments.'$ENVIRONMENT'.docker.name // .docker.name // "'$REPO_NAME'"' config.yaml)
           CONTEXT=$(yq -r '.environments.'$ENVIRONMENT'.docker.filepath // .docker.filepath // "."' config.yaml)
+          USER=$(yq -r '.environments.'$ENVIRONMENT'.docker.username // .docker.username // "'$USER_NAME'"' config.yaml)
           REGISTRY=$(yq -r '.environments.'$ENVIRONMENT'.docker.registry // .docker.registry // "docker.io"' config.yaml)
           DOCKERFILE=$(yq -r '.environments.'$ENVIRONMENT'.docker.filename // .docker.filename // "Dockerfile"' config.yaml)
           PLATFORMS=$(yq -r '.environments.'$ENVIRONMENT'.docker.platforms // .docker.platforms // "linux/amd64"' config.yaml)
 
           RAW_TAGS=$(yq -r '[.environments.'$ENVIRONMENT'.docker.tags // .docker.tags // "latest" ]|flatten' config.yaml)
-          TAGS_ARRAY=$(yq -r 'map("'$REGISTRY'/'$NAME':"+.)|join(",")' <<< $RAW_TAGS)
+          TAGS_ARRAY=$(yq -r 'map("'$REGISTRY'/'$USER'/'$NAME':"+.)|join(",")' <<< $RAW_TAGS)
 
           cat config.yaml
           ls -la
 
           echo "🐳Docker Configuration:"
           echo "  Name: $NAME"
+          echo "  Username: $USER"
           echo "  Repo name: $REPO_NAME"
           echo "  Registry: $REGISTRY"
           echo "  Dockerfile: $DOCKERFILE"
