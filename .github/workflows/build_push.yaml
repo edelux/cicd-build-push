@@ -53,16 +53,91 @@ jobs:
           RAW_TAGS=$(yq -r '[.environments.'$ENVIRONMENT'.docker.tags // .docker.tags // "latest" ]|flatten' config.yaml)
           TAGS_ARRAY=$(yq -r 'map("'$REGISTRY'/'$USER'/'$NAME':"+.)|join(",")' <<< $RAW_TAGS)
 
-          cat config.yaml
-          ls -la
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "username=$USER" >> $GITHUB_OUTPUT
+          echo "context=$CONTEXT" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS_ARRAY" >> $GITHUB_OUTPUT
+          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+          echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
 
-          echo "🐳Docker Configuration:"
-          echo "  Name: $NAME"
-          echo "  Username: $USER"
-          echo "  Repo name: $REPO_NAME"
-          echo "  Registry: $REGISTRY"
-          echo "  Dockerfile: $DOCKERFILE"
-          echo "  Context: $CONTEXT"
-          echo "  Tags: $TAGS_ARRAY"
-          echo "  raw tags: $RAW_TAGS"
-          echo "  Platforms: $PLATFORMS"
+          echo "🐳 Docker Configuration:"
+          echo "   Name: $NAME"
+          echo "   Registry: $REGISTRY"
+          echo "   Tags: $TAGS_ARRAY"
+          echo "   Dockerfile: $DOCKERFILE"
+          echo "   Context: $CONTEXT"
+          echo "   Platforms: $PLATFORMS"
+
+#-------------------------------------------------------------------------------------------
+        ## DockerHub
+      - name: Login to DockerHub
+        if: ${{ steps.config.outputs.registry == 'docker.io' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#-------------------------------------------------------------------------------------------
+      ## GitHub Container Registry
+      - name: Login to GitHub Container Registry
+        if: ${{ steps.config.outputs.registry == 'ghcr.io' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+#-------------------------------------------------------------------------------------------
+        ## AWS ECR
+      - name: Setup AWS Credentials
+        if: ${{ contains(steps.config.outputs.registry, 'amazonaws.com') || steps.config.outputs.registry == 'ecr' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+
+      - name: Login to Amazon ECR
+        if: ${{ contains(steps.config.outputs.registry, 'amazonaws.com') || steps.config.outputs.registry == 'ecr' }}
+        uses: aws-actions/amazon-ecr-login@v2
+#-------------------------------------------------------------------------------------------
+
+      - name: Set Multiarch Environment
+        uses: docker/setup-qemu-action@v3
+  
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.config.outputs.tags }}
+          context: ${{ steps.config.outputs.context }}
+          platforms: ${{ steps.config.outputs.platforms }}
+          file: ${{ steps.config.outputs.context }}/${{ steps.config.outputs.dockerfile }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.title=${{ steps.config.outputs.name }}
+            org.opencontainers.image.description=Docker image for ${{ steps.config.outputs.name }}
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.repository.updated_at }}
+
+      - name: Build Summary
+        run: |
+          echo "## 🐳 Docker Build Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ steps.config.outputs.name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** \`${{ steps.config.outputs.registry }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** \`${{ steps.config.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** \`${{ steps.config.outputs.platforms }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Dockerfile:** \`${{ steps.config.outputs.dockerfile }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Context:** \`${{ steps.config.outputs.context }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.ENVIRONMENT }}" != "" ]; then
+            echo "**Environment:** \`${{ inputs.ENVIRONMENT }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+...
