@@ -38,11 +38,20 @@ jobs:
           sudo apt update -qq >/dev/null 2>&1 && \
           DEBIAN_FRONTEND=noninteractive sudo apt install -y j2cli gettext moreutils >/dev/null 2>&1
 
-          chronic j2 config.yaml -o config.yaml
+          test -f config.source && source config.source && chronic j2 config.yaml -o config.yaml
+          test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='null' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
+
+          ls -la
+          cat config.source
+          echo "---------------------"
+          cat config.yaml
+          echo "---------------------"
 
           USER_NAME=$(dirname $GITHUB_REPOSITORY)
           REPO_NAME=$(basename $GITHUB_REPOSITORY)
-          test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='null' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
+
+          LATEST=$(yq -r '.environments.'$ENVIRONMENT'.docker.latest // .docker.latest ' config.yaml)
+          VERSION=$(yq -r '.environments.'$ENVIRONMENT'.docker.version // .docker.version ' config.yaml)
           NAME=$(yq -r '.environments.'$ENVIRONMENT'.docker.name // .docker.name // "'$REPO_NAME'"' config.yaml)
           CONTEXT=$(yq -r '.environments.'$ENVIRONMENT'.docker.filepath // .docker.filepath // "."' config.yaml)
           USER=$(yq -r '.environments.'$ENVIRONMENT'.docker.username // .docker.username // "'$USER_NAME'"' config.yaml)
