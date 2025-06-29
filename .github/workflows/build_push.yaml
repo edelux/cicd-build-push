@@ -59,9 +59,10 @@ jobs:
           DOCKERFILE=$(yq -r '.environments.'$ENVIRONMENT'.docker.filename // .docker.filename // "Dockerfile"' config.yaml)
           PLATFORMS=$(yq -r '.environments.'$ENVIRONMENT'.docker.platforms // .docker.platforms // "linux/amd64"' config.yaml)
 
-          [ "$LATEST" == "true" ] && LATEST="latest" || LATEST=""
+          LATEST_TAG=""
+          [ "$LATEST" == "true" ] && LATEST_TAG="latest"
           RAW_TAGS=$(yq -r '[.environments.'$ENVIRONMENT'.docker.tags // .docker.tags // "latest" ]|flatten' config.yaml)
-          TAGS_ARRAY=$(yq -r '(map(tostring) + ["'"$VERSION"'","'"$LATEST"'"])|map(select(. != "false" and . != null and . != ""))|unique|map("'"$REGISTRY"'/'"$USER"'/'"$NAME"':" + .)|join(",")' <<< "$RAW_TAGS")
+          TAGS_ARRAY=$(yq -r '(map(tostring) + ["'"$VERSION"'","'"$LATEST_TAG"'"])|map(select(. != "false" and . != null and . != ""))|unique|map("'"$REGISTRY"'/'"$USER"'/'"$NAME"':" + .)|join(",")' <<< "$RAW_TAGS")
 
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "username=$USER" >> $GITHUB_OUTPUT
