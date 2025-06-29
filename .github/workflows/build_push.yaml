@@ -60,7 +60,7 @@ jobs:
           PLATFORMS=$(yq -r '.environments.'$ENVIRONMENT'.docker.platforms // .docker.platforms // "linux/amd64"' config.yaml)
 
           RAW_TAGS=$(yq -r '[.environments.'$ENVIRONMENT'.docker.tags // .docker.tags // "latest" ]|flatten' config.yaml)
-          TAGS_ARRAY=$(yq -r 'map("'$REGISTRY'/'$USER'/'$NAME':"+.)|join(",")' <<< $RAW_TAGS)
+          TAGS_ARRAY=$(yq -r '.+["'"$VERSION"'","latest"]|map("'"$REGISTRY"'/'"$USER"'/'"$NAME"':"+.)|join(",")' <<< "$RAW_TAGS")
 
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "username=$USER" >> $GITHUB_OUTPUT
@@ -81,6 +81,9 @@ jobs:
           echo "   Latest: $LATEST"
           echo "   Version: $VERSION"
           echo "   TAGS: $TAGS_ARRAY"
+
+      - name: Force exit
+        run: exit 1
 
 #-------------------------------------------------------------------------------------------
         ## DockerHub
