@@ -41,12 +41,6 @@ jobs:
           test -f config.source && source config.source && chronic j2 config.yaml -o config.yaml
           test -z ${{ inputs.ENVIRONMENT }} && ENVIRONMENT='null' || ENVIRONMENT=${{ inputs.ENVIRONMENT }}
 
-          ls -la
-          cat config.source
-          echo "---------------------"
-          cat config.yaml
-          echo "---------------------"
-
           USER_NAME=$(dirname $GITHUB_REPOSITORY)
           REPO_NAME=$(basename $GITHUB_REPOSITORY)
 
@@ -79,12 +73,6 @@ jobs:
           echo "   Dockerfile: $DOCKERFILE"
           echo "   Context: $CONTEXT"
           echo "   Platforms: $PLATFORMS"
-          echo "   Latest: $LATEST"
-          echo "   Version: $VERSION"
-          echo "   TAGS: $TAGS_ARRAY"
-
-      - name: Force exit
-        run: exit 1
 
 #-------------------------------------------------------------------------------------------
         ## DockerHub
