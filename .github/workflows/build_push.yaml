@@ -59,7 +59,7 @@ jobs:
           DOCKERFILE=$(yq -r '.environments.'$ENVIRONMENT'.docker.filename // .docker.filename // "Dockerfile"' config.yaml)
           PLATFORMS=$(yq -r '.environments.'$ENVIRONMENT'.docker.platforms // .docker.platforms // "linux/amd64"' config.yaml)
 
-          [ $LATEST == "true" ] && LATEST="latest"
+          [ $LATEST == "true" ] && LATEST="latest" || LATEST=""
           RAW_TAGS=$(yq -r '[.environments.'$ENVIRONMENT'.docker.tags // .docker.tags // "latest" ]|flatten' config.yaml)
           TAGS_ARRAY=$(yq -r '(map(tostring)+["'"$VERSION"'","'"$LATEST"'"])|map(select(. != "false" and . !=null))|unique|map("'"$REGISTRY"'/'"$USER"'/'"$NAME"':"+.)|join(",")' <<< "$RAW_TAGS")
 
