@@ -14,8 +14,6 @@ on:
         type: string
         default: config.yaml
     secrets:
-      DOCKERHUB_USERNAME:
-        required: false
       DOCKERHUB_TOKEN:
         required: false
 
@@ -80,7 +78,7 @@ jobs:
         if: ${{ steps.config.outputs.registry == 'docker.io' }}
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 #-------------------------------------------------------------------------------------------
