@@ -104,8 +104,8 @@ jobs:
       - name: Login to Amazon ECR
         if: ${{ contains(steps.config.outputs.registry, 'amazonaws.com') || steps.config.outputs.registry == 'ecr' }}
         uses: aws-actions/amazon-ecr-login@v2
-#-------------------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------------------
       - name: Set Multiarch Environment
         uses: docker/setup-qemu-action@v3
   
