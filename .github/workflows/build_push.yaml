@@ -42,7 +42,7 @@ jobs:
           USER_NAME=$(dirname $GITHUB_REPOSITORY)
           REPO_NAME=$(basename $GITHUB_REPOSITORY)
 
-          LATEST=$(yq -r '.environments.'"$ENVIRONMENT"'.docker.latest // .docker.latest // true' config.yaml)
+          LATEST=$(yq -r '.environments.'"$ENVIRONMENT"'.docker.latest // .docker.latest // false' config.yaml)
           VERSION=$(yq -r '.environments.'"$ENVIRONMENT"'.docker.version // .docker.version // false' config.yaml)
           NAME=$(yq -r '.environments.'"$ENVIRONMENT"'.docker.name // .docker.name // "'$REPO_NAME'"' config.yaml)
           CONTEXT=$(yq -r '.environments.'"$ENVIRONMENT"'.docker.filepath // .docker.filepath // "."' config.yaml)
