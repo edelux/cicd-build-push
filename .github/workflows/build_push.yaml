@@ -42,6 +42,7 @@ jobs:
           USER_NAME=$(dirname $GITHUB_REPOSITORY)
           REPO_NAME=$(basename $GITHUB_REPOSITORY)
 
+          ALIAS=$(yq -r '[.environments.'"$ENVIRONMENT"'.docker.alias // .docker.alias // ""' config.yaml)
           LATEST=$(yq -r '.environments.'"$ENVIRONMENT"'.docker.latest // .docker.latest // false' config.yaml)
           VERSION=$(yq -r '.environments.'"$ENVIRONMENT"'.docker.version // .docker.version // false' config.yaml)
           NAME=$(yq -r '.environments.'"$ENVIRONMENT"'.docker.name // .docker.name // "'$REPO_NAME'"' config.yaml)
@@ -54,11 +55,13 @@ jobs:
           [ "$LATEST" == "true" ] && LATEST="latest"
           RAW_TAGS=$(yq -r '[.environments.'"$ENVIRONMENT"'.docker.tags // .docker.tags // []]|flatten' config.yaml)
           TAGS_ARRAY=$(yq -r '(map(tostring)+["'"$VERSION"'","'"$LATEST"'"])|map(select(. != "false" and . != null and . != ""))|unique|map("'"$REGISTRY"'/'"$USER"'/'"$NAME"':" + .)|join(",")' <<< "$RAW_TAGS")
+          ALIAS_ARRAY=$(yq -r '(map(tostring)+["'"$VERSION"'","'"$LATEST"'"])|map(select(. != "false" and . != null and . != ""))|unique|map("'"$REGISTRY"'/'"$USER"'/'"$ALIAS"':" + .)|join(",")' <<< "$RAW_TAGS")
+          [ -n "$ALIAS" ] && TAGS="${TAGS_ARRAY},${ALIAS_ARRAY}" || TAGS="$TAGS_ARRAY"
 
-          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >>  $GITHUB_OUTPUT
           echo "username=$USER" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT" >> $GITHUB_OUTPUT
-          echo "tags=$TAGS_ARRAY" >> $GITHUB_OUTPUT
           echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
           echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
           echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
@@ -66,11 +69,11 @@ jobs:
 
           echo "🐳 Docker Configuration:"
           echo "   Name: $NAME"
-          echo "   Registry: $REGISTRY"
-          echo "   Tags: $TAGS_ARRAY"
-          echo "   Dockerfile: $DOCKERFILE"
+          echo "   Tags: $TAGS"
           echo "   Context: $CONTEXT"
+          echo "   Registry: $REGISTRY"
           echo "   Platforms: $PLATFORMS"
+          echo "   Dockerfile: $DOCKERFILE"
 
 #-------------------------------------------------------------------------------------------
         ## DockerHub
