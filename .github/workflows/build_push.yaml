@@ -61,6 +61,7 @@ jobs:
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
           echo "name=$NAME" >>  $GITHUB_OUTPUT
           echo "username=$USER" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "context=$CONTEXT" >> $GITHUB_OUTPUT
           echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
           echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
@@ -70,6 +71,7 @@ jobs:
           echo "🐳 Docker Configuration:"
           echo "   Name: $NAME"
           echo "   Tags: $TAGS"
+          echo "   Version: $VERSION"
           echo "   Context: $CONTEXT"
           echo "   Registry: $REGISTRY"
           echo "   Platforms: $PLATFORMS"
